@@ -4,7 +4,9 @@ cloop (3.14.1) UNRELEASED; urgency=medium
   * Changed packaging type to native, removed debian/patches
   * Overhaul of debian packaging, changed packaging style to dh(7), updated
     debian/copyright accordingly since there is hardly anything left from
-    the original packaging
+    the original packaging (closes: #727288)
+  * Italian translation of debconf messages from Beatrice Torracca
+    (closes: #714004)
 
  -- Eduard Bloch <blade@debian.org>  Fri, 24 Oct 2014 20:47:18 +0200
 
