@@ -53,7 +53,7 @@ advancecomp-1.15/advfs:
 	( cd advancecomp-1.15 ; ./configure && $(MAKE) advfs )
 
 extract_compressed_fs: extract_compressed_fs.c
-	$(CC) -Wall -O2 -s -o $@ $< -lz
+	$(CC) -Wall -O2 $(CFLAGS) $(LDFLAGS) -o $@ $< -lz
 
 cloop_suspend: cloop_suspend.o
 	$(CC) -Wall -O2 -s -o $@ $<

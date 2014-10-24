@@ -21,18 +21,13 @@ override_dh_auto_build:
 override_dh_auto_install:
 	install -d debian/cloop-src/usr/src/modules/cloop
 	install -d debian/cloop-utils/usr/bin
-	install -d debian/cloop-utils/usr/share/man/man1
 	install -m 755 create_compressed_fs  debian/cloop-utils/usr/bin/
 	install -m 755 extract_compressed_fs debian/cloop-utils/usr/bin/
-	tar -cf - {Makefile,*.[ch],debian/{po,compat,*template*,control*,copyright,dirs,*_KVERS_*,README.Debian,changelog},README} | tar -x -C debian/cloop-src/usr/src/modules/cloop
+	tar -cf - {Makefile,*.[ch],debian/{po,compat,*template*,control*,copyright,*_KVERS_*,README.Debian,changelog},README} | tar -x -C debian/cloop-src/usr/src/modules/cloop
 	install debian/rules.m-a debian/cloop-src/usr/src/modules/cloop/debian/rules
 	cp ChangeLog debian/cloop-src/usr/src/modules/cloop/
 	dh_fixperms -i
-	cd debian/cloop-src/usr/src ; tar -cf - modules | xz -9 > cloop.tar.xz ; rm -rf modules
-	# call them this way to get the symlinks
-	dh_installman -a
-	dh_compress -a
-	dh_link -a
+	cd debian/cloop-src/usr/src && XZ_OPT=-9 tar -cf cloop.tar.xz modules && rm -rf modules
 
 override_dh_auto_clean:
 	-$(MAKE) clean
