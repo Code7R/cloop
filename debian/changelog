@@ -1,18 +1,26 @@
-cloop (3.14.1) UNRELEASED; urgency=medium
+cloop (3.14.1) unstable; urgency=medium
 
-  * Rebased to a new location, now originating on Klaus Knopper's github version
+  * New upstream version
     + updated version, works with kernel versions 3.14..3.17 (closes: #719128)
-  * Changed packaging type to native, removed debian/patches
-  * Overhaul of debian packaging, changed packaging style to dh(7), updated
-    debian/copyright accordingly since there is not much left from
-    the original packaging (closes: #727288)
+  * New location, now originating on Klaus Knopper's github version
+  * Changed package package type to native until the mode of cooperation with
+    upstream is fully clarified
+  * Overhaul of debian packaging, changed to dh(7) style, auto-updating
+    autotools-dev files on build now (closes: #727288)
   * Enabled hardening, fixed some minor issues in advfs.cc
   * Removed special hacks for ancient Cygwin and Mac OS X versions in
     extract_compressed_fs.c (closes: #370204)
   * Italian translation of debconf messages from Beatrice Torracca
     (closes: #714004)
 
- -- Eduard Bloch <blade@debian.org>  Fri, 24 Oct 2014 20:47:18 +0200
+ -- Eduard Bloch <blade@debian.org>  Sat, 25 Oct 2014 00:08:27 +0200
+
+cloop (3.14-1) unstable; urgency=medium
+
+  * Updates for Kernel >= 3.14
+  * Preparing for git repository upload
+
+ -- Klaus Knopper <knoppix@knopper.net>  Tue, 26 Aug 2014 17:14:37 +0200
 
 cloop (2.6.39.2-1) unstable; urgency=low
 
