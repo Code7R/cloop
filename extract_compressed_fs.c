@@ -10,24 +10,13 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
-/*Mac OS X does not have endian.h*/
-#if defined(__APPLE__)
-#include <architecture/byte_order.h>
-#else
 #include <endian.h>
-#endif
-
 #include <errno.h>
 #include <string.h>
 #include <zlib.h>
 #include <netinet/in.h>
 #include <inttypes.h>
 
-/*Mac OS X does not have loff_t*/
-#if defined(__CYGWIN__) || defined(__APPLE__)
-typedef uint64_t loff_t;
-#endif
 #ifndef be64toh
 static __inline __uint64_t
 __bswap64(__uint64_t _x)

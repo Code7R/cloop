@@ -68,7 +68,7 @@
         create_compressed_fs image.iso -S image.cloop.a0 - | split -b 1024m - image.cloop.
     </para>
     <para>
-        cat image.cloop.* | cdrecord -
+        cat image.cloop.* | cdrskin -
     </para>
 
 </refsect1>

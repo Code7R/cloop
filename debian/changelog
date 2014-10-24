@@ -4,8 +4,11 @@ cloop (3.14.1) UNRELEASED; urgency=medium
     + updated version, works with kernel versions 3.14..3.17 (closes: #719128)
   * Changed packaging type to native, removed debian/patches
   * Overhaul of debian packaging, changed packaging style to dh(7), updated
-    debian/copyright accordingly since there is hardly anything left from
+    debian/copyright accordingly since there is not much left from
     the original packaging (closes: #727288)
+  * Enabled hardening, fixed some minor issues in advfs.cc
+  * Removed special hacks for ancient Cygwin and Mac OS X versions in
+    extract_compressed_fs.c (closes: #370204)
   * Italian translation of debconf messages from Beatrice Torracca
     (closes: #714004)
 

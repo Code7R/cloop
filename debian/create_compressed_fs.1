@@ -45,7 +45,7 @@ $mkcmd | create_compressed_fs -s $($mkcmd --print-size)i - file.cloop
 .PP
 create_compressed_fs image.iso -S image.cloop.a0 - | split -b 1024m - image.cloop.
 .PP
-cat image.cloop.* | cdrecord -
+cat image.cloop.* | cdrskin -
 .SH "NOTES"
 .PP
 For optimal performance, create_compressed_fs should be used with real
