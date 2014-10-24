@@ -1,0 +1,53 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@ --parallel --with autotools_dev
+
+# compile just the tools, not the kernel module
+override_dh_auto_build:
+	$(MAKE) utils
+
+override_dh_auto_install:
+	install -d debian/cloop-src/usr/src/modules/cloop
+	install -d debian/cloop-utils/usr/bin
+	install -d debian/cloop-utils/usr/share/man/man1
+	install -m 755 create_compressed_fs  debian/cloop-utils/usr/bin/
+	install -m 755 extract_compressed_fs debian/cloop-utils/usr/bin/
+	tar -cf - {Makefile,*.[ch],debian/{po,compat,*template*,control*,copyright,rules,dirs,*_KVERS_*,README.Debian,changelog},README} | tar -x -C debian/cloop-src/usr/src/modules/cloop
+	cp ChangeLog debian/cloop-src/usr/src/modules/cloop/
+	dh_fixperms -i
+	cd debian/cloop-src/usr/src ; tar -cf - modules | xz -9 > cloop.tar.xz ; rm -rf modules
+
+override_dh_auto_clean:
+	-$(MAKE) clean
+	-dh_clean
+	rm -rf *-stamp debian/cloop-?.?.?* debian/cloop debian/cloop-module debian/cloop-module-?.?.* debian/*.files knoppix
+
+# for m-a
+SHELL=/bin/bash
+PACKAGE=cloop-module
+MA_DIR ?= /usr/share/modass
+-include $(MA_DIR)/include/generic.mk
+-include $(MA_DIR)/include/common-rules.mk
+kdist_clean: clean
+kdist_config: kdist_configure
+kdist_configure: prep-deb-files
+
+binary-modules: kdist_configure
+	$(MAKE) module KERNEL_DIR=$(KSRC)  KVERSION=$(KVERS)
+	dh_installdirs -p $(PKGNAME) lib/modules/$(KVERS)/extra 
+	cp *.ko $(CURDIR)/debian/$(PKGNAME)/lib/modules/$(KVERS)/extra 
+	dh_testdir -a
+	dh_testroot -a
+	dh_installdebconf -a
+	dh_installdocs -a README debian/README.Debian
+	dh_installchangelogs CHANGELOG -a
+	dh_compress -a
+	dh_fixperms -a
+	dh_installdeb -a
+	dh_gencontrol -a -- -v$(VERSION)
+	dh_md5sums -a
+	dh_builddeb -a --destdir=$(DEB_DESTDIR)
+
+.PHONY: kdist kdist_image kdist_configure kdist_clean kdist
+.NOTPARALLEL:
