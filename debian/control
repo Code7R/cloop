@@ -2,8 +2,8 @@ Source: cloop
 Section: misc
 Priority: optional
 Maintainer: Eduard Bloch <blade@debian.org>
-Build-Depends: debhelper (>> 5.0.0), zlib1g-dev, bzip2, xz-utils
-Standards-Version: 3.9.2
+Build-Depends: debhelper (>> 9), zlib1g-dev, xz-utils
+Standards-Version: 3.9.6
 
 Package: cloop-utils
 Architecture: any
@@ -14,7 +14,7 @@ Description: Tools for handling with cloop compressed volumes
 
 Package: cloop-src
 Architecture: all
-Depends: module-assistant, debhelper (>= 5.0.37), bzip2, ${misc:Depends}
+Depends: module-assistant, debhelper (>= 5.0.37), xz-utils, ${misc:Depends}
 Description: Source of the compressed loopback device module
  This package contains a source package for building the cloop module.
  You can use module-assistant or make-kpkg to build a modules package for
