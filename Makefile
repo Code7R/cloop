@@ -66,3 +66,47 @@ dist: clean
 	cd .. ; \
 	tar -cf - cloop/{Makefile,*.[ch],CHANGELOG,README} | \
 	bzip2 -9 > $(HOME)/redhat/SOURCES/cloop.tar.bz2
+
+
+
+# some convenience code borrowed from apt-cacher-ng
+#
+# cloop specific part
+PKGNAME=cloop
+# no-op, just make sure the files are there
+fixversion: VERSION
+doc: ChangeLog
+
+VERSION=$(shell cat VERSION)
+TAGVERSION=$(subst rc,_rc,$(subst pre,_pre,$(VERSION)))
+DISTNAME=$(PKGNAME)-$(VERSION)
+DEBSRCNAME=$(PKGNAME)_$(shell echo $(VERSION) | sed -e "s,pre,~pre,;s,rc,~rc,;").orig.tar.xz
+
+
+tarball: fixversion doc notdebianbranch nosametarball
+	# diff-index is buggy and reports false positives... trying to enforce it
+	git update-index --refresh || git commit -a
+	git diff-index --quiet HEAD || git commit -a
+	git archive --prefix $(DISTNAME)/ HEAD | xz -9 > ../$(DISTNAME).tar.xz
+	test -e /etc/debian_version && ln -f ../$(DISTNAME).tar.xz ../$(DEBSRCNAME) || true
+	test -e ../tarballs && ln -f ../$(DISTNAME).tar.xz ../tarballs/$(DEBSRCNAME) || true
+	test -e ../build-area && ln -f ../$(DISTNAME).tar.xz ../build-area/$(DEBSRCNAME) || true
+
+tarball-remove:
+	rm -f ../$(DISTNAME).tar.xz ../tarballs/$(DEBSRCNAME) ../$(DEBSRCNAME) ../build-area/$(DEBSRCNAME)
+
+release: noremainingwork tarball
+	git tag upstream/$(TAGVERSION)
+
+unrelease: tarball-remove
+	git tag -d upstream/$(TAGVERSION)
+
+noremainingwork:
+	test ! -e TODO.next # the quick reminder for the next release should be empty
+
+notdebianbranch:
+	test ! -f debian/rules # make sure it is not run from the wrong branch
+
+nosametarball:
+	test ! -f ../$(DISTNAME).tar.xz # make sure not to overwrite existing tarball
+	test ! -f ../tarballs/$(DEBSRCNAME)
