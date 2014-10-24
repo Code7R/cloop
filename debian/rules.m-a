@@ -26,7 +26,7 @@ binary-modules: kdist_configure
 	dh_builddeb -a --destdir=$(DEB_DESTDIR)
 
 kdist_clean:
-	rm -f *.ko debian/$(PKGNAME)
+	rm -rf *.ko debian/$(PKGNAME)
 
 .PHONY: kdist kdist_image kdist_configure kdist_clean kdist
 .NOTPARALLEL:

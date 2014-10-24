@@ -22,7 +22,7 @@ override_dh_auto_build:
 override_dh_auto_install:
 	install -m 755 create_compressed_fs  debian/cloop-utils/usr/bin/
 	install -m 755 extract_compressed_fs debian/cloop-utils/usr/bin/
-	tar -cf - {Makefile,VERSION,*.[ch],debian/{po,compat,*template*,control*,copyright,*_KVERS_*,README.Debian,changelog},README*} | tar -x -C debian/cloop-src/usr/src/modules/cloop
+	tar -cf - {Makefile,*.[ch],debian/{po,compat,*template*,control*,copyright,*_KVERS_*,README.Debian,changelog},README*} | tar -x -C debian/cloop-src/usr/src/modules/cloop
 	install debian/rules.m-a debian/cloop-src/usr/src/modules/cloop/debian/rules
 	cp ChangeLog debian/cloop-src/usr/src/modules/cloop/
 	dh_fixperms -i
