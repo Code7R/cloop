@@ -1,4 +1,4 @@
-cloop (3.14-1) UNRELEASED; urgency=medium
+cloop (3.14.1) UNRELEASED; urgency=medium
 
   * Rebased to a new location, now originating on Klaus Knopper's github version
   * Changed packaging type to native, removed debian/patches
