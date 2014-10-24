@@ -6,7 +6,6 @@ PACKAGE=cloop-module
 MA_DIR ?= /usr/share/modass
 -include $(MA_DIR)/include/generic.mk
 -include $(MA_DIR)/include/common-rules.mk
-kdist_clean: clean
 kdist_config: kdist_configure
 kdist_configure: prep-deb-files
 
@@ -25,6 +24,9 @@ binary-modules: kdist_configure
 	dh_gencontrol -a -- -v$(VERSION)
 	dh_md5sums -a
 	dh_builddeb -a --destdir=$(DEB_DESTDIR)
+
+kdist_clean:
+	rm -f *.ko debian/$(PKGNAME)
 
 .PHONY: kdist kdist_image kdist_configure kdist_clean kdist
 .NOTPARALLEL:
