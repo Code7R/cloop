@@ -23,7 +23,7 @@ override_dh_auto_build:
 	dh_auto_build -- extract_compressed_fs create_compressed_fs
 
 override_dh_auto_install:
-	install -d $(XDIR)/debian debian/cloop-utils/usr/bin
+	install -d $(XDIR)/debian debian/cloop-utils/usr/bin debian/cloop-utils/usr/share/doc/cloop-utils
 	install -m 755 create_compressed_fs extract_compressed_fs  debian/cloop-utils/usr/bin/
 	cp Makefile *.c *.h README ChangeLog $(XDIR)
 	cd debian && install rules.m-a ../$(XDIR)/debian/rules && cp -r po compat control* copyright *_KVERS_* README.Debian changelog ../$(XDIR)/debian
