@@ -1,3 +1,10 @@
+cloop (3.14.1.1) unstable; urgency=medium
+
+  * Fixes build failure (old bashism)
+  * Passing some configure flags to embedded compressor implementation
+
+ -- Eduard Bloch <blade@debian.org>  Sat, 25 Oct 2014 10:09:34 +0200
+
 cloop (3.14.1) unstable; urgency=medium
 
   * New upstream version

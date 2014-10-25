@@ -3,15 +3,18 @@
 export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 DPKG_EXPORT_BUILDFLAGS = 1
 include /usr/share/dpkg/buildflags.mk
+include /usr/share/dpkg/architecture.mk
 CFLAGS += -flto
 CXXFLAGS += -flto
 LDFLAGS += -flto
+
+XDIR=debian/cloop-src/usr/src/modules/cloop
 
 %:
 	dh $@ --parallel --with autotools_dev
 
 override_dh_auto_configure:
-	cd advancecomp-1.15 && ./configure
+	cd advancecomp-1.15 && ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE)
 
 # compile just the tools, not the kernel module
 override_dh_auto_build:
@@ -20,15 +23,9 @@ override_dh_auto_build:
 	dh_auto_build -- extract_compressed_fs create_compressed_fs
 
 override_dh_auto_install:
-	install -m 755 create_compressed_fs  debian/cloop-utils/usr/bin/
-	install -m 755 extract_compressed_fs debian/cloop-utils/usr/bin/
-	tar -cf - {Makefile,*.[ch],debian/{po,compat,*template*,control*,copyright,*_KVERS_*,README.Debian,changelog},README*} | tar -x -C debian/cloop-src/usr/src/modules/cloop
-	install debian/rules.m-a debian/cloop-src/usr/src/modules/cloop/debian/rules
-	cp ChangeLog debian/cloop-src/usr/src/modules/cloop/
-	dh_fixperms -i
+	install -d $(XDIR)/debian debian/cloop-utils/usr/bin
+	install -m 755 create_compressed_fs extract_compressed_fs  debian/cloop-utils/usr/bin/
+	cp Makefile *.c *.h README ChangeLog $(XDIR)
+	cd debian && install rules.m-a ../$(XDIR)/debian/rules && cp -r po compat control* copyright *_KVERS_* README.Debian changelog ../$(XDIR)/debian
+	dh_fixperms -i -Xrules
 	cd debian/cloop-src/usr/src && XZ_OPT=-9 tar --xz -c -f cloop.tar.xz modules && rm -rf modules
-
-override_dh_auto_clean:
-	$(MAKE) clean ||:
-	-dh_clean
-	rm -rf *-stamp debian/cloop-?.?.?* debian/cloop debian/cloop-module debian/cloop-module-?.?.* debian/*.files knoppix
