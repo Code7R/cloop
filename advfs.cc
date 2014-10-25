@@ -847,7 +847,7 @@ int main(int argc, char **argv)
         die("Unknown input file. Provide a path name or - for STDIN");
 
     if(strcmp(tofile, "-")) {
-        if(0 == stat(fromfile, &buf) && truncate(tofile,0))
+        if(0 == stat(tofile, &buf) && truncate(tofile,0))
             die("Cannot resize the existing target file");
         targetfh=fopen(tofile, "w+");
         if(!targetfh)

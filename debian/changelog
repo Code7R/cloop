@@ -2,6 +2,7 @@ cloop (3.14.1.1) unstable; urgency=medium
 
   * Fixes build failure (old bashism)
   * Passing some configure flags to embedded compressor implementation
+  * Bugfix in create_compressed_fs (fallout from previous change)
 
  -- Eduard Bloch <blade@debian.org>  Sat, 25 Oct 2014 10:09:34 +0200
 
