@@ -1,3 +1,9 @@
+cloop (3.14.1.2) unstable; urgency=low
+
+  * Fix the build with kernel 3.19+ (f_dentry macro removal)
+
+ -- Eduard Bloch <blade@debian.org>  Sun, 03 May 2015 13:15:58 +0200
+
 cloop (3.14.1.1) unstable; urgency=medium
 
   * Fixes build failure (old bashism)
