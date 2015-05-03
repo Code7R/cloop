@@ -440,7 +440,7 @@ static int cloop_set_file(int cloop_num, struct file *file, char *filename)
  unsigned int i, offsets_read, total_offsets;
  int isblkdev;
  int error = 0;
- inode = file->f_dentry->d_inode;
+ inode = file->f_path.dentry->d_inode;
  isblkdev=S_ISBLK(inode->i_mode)?1:0;
  if(!isblkdev&&!S_ISREG(inode->i_mode))
   {
