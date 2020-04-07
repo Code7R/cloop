@@ -11,7 +11,7 @@ LDFLAGS += -flto
 XDIR=debian/cloop-src/usr/src/modules/cloop
 
 %:
-	dh $@ --parallel --with autotools_dev
+	dh $@
 
 override_dh_auto_configure:
 	cd advancecomp-1.15 && ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE)
