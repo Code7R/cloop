@@ -402,11 +402,7 @@ static blk_status_t cloop_handle_request(struct cloop_device *clo, struct reques
  int buffered_blocknum = -1;
  int preloaded = 0;
  loff_t offset = (loff_t) blk_rq_pos(req)<<9;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3,14,0)
-struct bio_vec *bvec;
-#else 
  struct bio_vec bvec;
-#endif
  struct req_iterator iter;
  blk_status_t ret = BLK_STS_OK;
 
@@ -424,14 +420,9 @@ struct bio_vec *bvec;
 
  rq_for_each_segment(bvec, req, iter)
  {
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3,14,0)
-   unsigned long len = bvec->bv_len;
-   char *to_ptr      = kmap(bvec->bv_page) + bvec->bv_offset;
-#else
   unsigned long len = bvec.bv_len;
   loff_t to_offset  = bvec.bv_offset;
 
-#endif
   while(len > 0)
   {
    u_int32_t length_in_buffer;
@@ -522,7 +513,7 @@ static int cloop_set_file(int cloop_num, struct file *file)
  int isblkdev, bytes_read, error = 0;
  if (clo->suspended) return error;
  #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)
- inode = file->f_path.dentry->d_inode;
+ inode = file->f_dentry->d_inode;
  clo->underlying_filename = kstrdup(file->f_dentry->d_name.name ? file->f_dentry->d_name.name : (const unsigned char *)"anonymous filename", GFP_KERNEL);
  #else
  inode = file->f_path.dentry->d_inode;
