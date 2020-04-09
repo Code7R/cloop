@@ -38,6 +38,10 @@
 
 #include <linux/types.h>   /* u_int32_t */
 
+#ifndef __KERNEL__
+#include <stdint.h> /* regular uint64_t */
+#endif
+
 #define CLOOP_HEADROOM 128
 
 /* Header of fixed length, can be located at beginning or end of file   */
