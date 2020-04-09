@@ -1054,15 +1054,15 @@ static int cloop_compat_ioctl(struct block_device *bdev, fmode_t mode,
   case LOOP_CLR_FD:       /* Change arg */ 
   case LOOP_GET_STATUS64: /* Change arg */ 
   case LOOP_SET_STATUS64: /* Change arg */ 
-	arg = (unsigned long) compat_ptr(arg);
+    return cloop_ioctl(bdev, mode, cmd, (unsigned long) compat_ptr(arg));
   case LOOP_SET_STATUS:   /* unchanged */
   case LOOP_GET_STATUS:   /* unchanged */
   case LOOP_SET_FD:       /* unchanged */
   case LOOP_CHANGE_FD:    /* unchanged */
-	return cloop_ioctl(bdev, mode, cmd, arg);
-	break;
+    return cloop_ioctl(bdev, mode, cmd, arg);
+  default:
+    return -ENOIOCTLCMD;
  }
- return -ENOIOCTLCMD;
 }
 #endif
 
