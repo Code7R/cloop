@@ -4,6 +4,7 @@ Priority: optional
 Maintainer: Eduard Bloch <blade@debian.org>
 Build-Depends: debhelper (>> 10), zlib1g-dev, xz-utils
 Standards-Version: 4.5.0
+Vcs-Git: https://github.com/Code7R/cloop.git -b debian/sid
 
 Package: cloop-utils
 Architecture: any
