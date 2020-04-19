@@ -6,3 +6,5 @@ advancecomp-1.15/config.status
 advancecomp-1.15/stamp-h1
 .gitignore*
 .tmp_versions*
+*.diff
+*.patch
