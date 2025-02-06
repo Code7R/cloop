@@ -1,3 +1,30 @@
+cloop (3.14.1.3+nmu1) unstable; urgency=medium
+
+  * Non-maintainer upload
+
+  [ Ben Hutchings ]
+  * Fix FTBFS with gcc 11 (Closes: #1005413):
+    - Remove exception specifications
+  * Fix module build for recent kernel versions (Closes: #1005414):
+    - Stop generating module vermagic in cloop.c. This has always been handled
+      by modpost and doing it here now results in build failure.
+    - Avoid using inode::i_bdev, which was removed in Linux 5.11.
+    - Use set_disk_ro() instead of set_device_ro(). The latter was not meant to
+      be used by device drivers and was removed in Linux 5.11.
+    - Use blk_{mq_alloc,cleanup}_disk() instead of separate queue and disk
+      allocation and cleanup on Linux 5.15+, since alloc_disk() was removed.
+    - Handle potential failure of add_disk() on Linux 5.15+.
+    - Use kernel_read() instead of vfs_read() and set_fs(). set_fs() is no
+      longer defined on some architectures, and kernel_read() has had large
+      file support since Linux 2.6.31.
+
+  [ Vagrant Cascadian ]
+  * debian/rules: Build tarball reproducibly, using consistent time, uid,
+    gid and sort order. Thanks to Dhole for the initial patch.
+    (Closes: #787996)
+
+ -- Vagrant Cascadian <vagrant@reproducible-builds.org>  Thu, 22 Dec 2022 12:41:49 -0800
+
 cloop (3.14.1.3) unstable; urgency=medium
 
   * Upgrading to more recent debhelper and latest policy standards

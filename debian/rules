@@ -28,4 +28,4 @@ override_dh_auto_install:
 	cp Makefile *.c *.h README ChangeLog $(XDIR)
 	cd debian && install rules.m-a ../$(XDIR)/debian/rules && cp -r po compat control* copyright *_KVERS_* README.Debian changelog ../$(XDIR)/debian
 	dh_fixperms -i -Xrules
-	cd debian/cloop-src/usr/src && XZ_OPT=-9 tar --xz -c -f cloop.tar.xz modules && rm -rf modules
+	cd debian/cloop-src/usr/src && XZ_OPT=-9 tar --xz --sort=name --mtime=@$(SOURCE_DATE_EPOCH) --owner=0 --group=0 --numeric-owner  -c -f cloop.tar.xz modules && rm -rf modules

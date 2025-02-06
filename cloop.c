@@ -309,15 +309,8 @@ static ssize_t cloop_read_from_file(struct cloop_device *clo, struct file *f, ch
  while (buf_done < buf_len)
   {
    size_t size = buf_len - buf_done, size_read;
-   mm_segment_t old_fs;
-   /* kernel_read() only supports 32 bit offsets, so we use vfs_read() instead. */
-   /* int size_read = kernel_read(f, pos, buf + buf_done, size); */
-
    // mutex_lock(&clo->clo_rq_mutex);
-   old_fs = get_fs();
-   set_fs(KERNEL_DS);
-   size_read = vfs_read(f, (void __user *)(buf + buf_done), size, &pos);
-   set_fs(old_fs);
+   size_read = kernel_read(f, buf + buf_done, size, &pos);
    // mutex_unlock(&clo->clo_rq_mutex);
 
    if(size_read <= 0)
@@ -528,7 +521,7 @@ static int cloop_set_file(int cloop_num, struct file *file)
   }
  clo->backing_file = file;
  clo->backing_inode= inode ;
- clo->underlying_total_size = (isblkdev) ? inode->i_bdev->bd_inode->i_size : inode->i_size;
+ clo->underlying_total_size = (isblkdev) ? file->f_mapping->host->i_size : inode->i_size;
  if(clo->underlying_total_size < header_size)
   {
    printk(KERN_ERR "%s: %llu bytes (must be >= %u bytes)\n",
@@ -538,7 +531,7 @@ static int cloop_set_file(int cloop_num, struct file *file)
   }
  if(isblkdev)
   {
-   struct request_queue *q = bdev_get_queue(inode->i_bdev);
+   struct request_queue *q = bdev_get_queue(I_BDEV(file->f_mapping->host));
    blk_queue_max_hw_sectors(clo->clo_queue, queue_max_hw_sectors(q)); /* Renamed in 2.6.34 */
    blk_queue_max_segments(clo->clo_queue, queue_max_segments(q)); /* Renamed in 2.6.34 */
    /* blk_queue_max_hw_segments(clo->clo_queue, queue_max_hw_segments(q)); */ /* Removed in 2.6.34 */
@@ -547,7 +540,7 @@ static int cloop_set_file(int cloop_num, struct file *file)
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 3, 0)
    blk_queue_merge_bvec(clo->clo_queue, q->merge_bvec_fn);
 #endif
-   clo->underlying_blksize = block_size(inode->i_bdev);
+   clo->underlying_blksize = block_size(I_BDEV(file->f_mapping->host));
   }
  else
    clo->underlying_blksize = PAGE_SIZE;
@@ -816,7 +809,7 @@ static int cloop_set_fd(int cloop_num, struct file *clo_file,
  file = fget(arg); /* get filp struct from ioctl arg fd */
  if(!file) return -EBADF;
  error=cloop_set_file(cloop_num,file);
- set_device_ro(bdev, 1);
+ set_disk_ro(clo->clo_disk, true);
  if(error) fput(file);
  return error;
 }
@@ -1125,6 +1118,7 @@ static int cloop_unregister_blkdev(void)
 static int cloop_alloc(int cloop_num)
 {
  struct cloop_device *clo = (struct cloop_device *) cloop_malloc(sizeof(struct cloop_device));
+ int error = -ENOMEM;
  if(clo == NULL) goto error_out;
  cloop_dev[cloop_num] = clo;
  memset(clo, 0, sizeof(struct cloop_device));
@@ -1138,39 +1132,58 @@ static int cloop_alloc(int cloop_num)
  clo->tag_set.flags = BLK_MQ_F_SHOULD_MERGE | BLK_MQ_F_BLOCKING;
  clo->tag_set.driver_data = clo;
  if(blk_mq_alloc_tag_set(&clo->tag_set)) goto error_out_free_clo;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0)
  clo->clo_queue = blk_mq_init_queue(&clo->tag_set);
  if(IS_ERR(clo->clo_queue))
   {
    printk(KERN_ERR "%s: Unable to alloc queue[%d]\n", cloop_name, cloop_num);
    goto error_out_free_tags;
   }
- clo->clo_queue->queuedata = clo;
- blk_queue_max_hw_sectors(clo->clo_queue, BLK_DEF_MAX_SECTORS);
  clo->clo_disk = alloc_disk(1);
+#else
+ clo->clo_disk = blk_mq_alloc_disk(&clo->tag_set, NULL);
+#endif
  if(!clo->clo_disk)
   {
    printk(KERN_ERR "%s: Unable to alloc disk[%d]\n", cloop_name, cloop_num);
    goto error_out_free_queue;
   }
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,15,0)
+ clo->clo_disk->queue = clo->clo_queue; 
+#else
+ clo->clo_disk->minors = 1;
+ clo->clo_queue = clo->clo_disk->queue;
+#endif
+ clo->clo_queue->queuedata = clo;
+ blk_queue_max_hw_sectors(clo->clo_queue, BLK_DEF_MAX_SECTORS);
  spin_lock_init(&clo->queue_lock);
  mutex_init(&clo->clo_ctl_mutex);
  mutex_init(&clo->clo_rq_mutex);
  clo->clo_disk->major = cloop_major;
  clo->clo_disk->first_minor = cloop_num;
  clo->clo_disk->fops = &clo_fops;
- clo->clo_disk->queue = clo->clo_queue;
  clo->clo_disk->private_data = clo;
  sprintf(clo->clo_disk->disk_name, "%s%d", cloop_name, cloop_num);
- add_disk(clo->clo_disk);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,15,0)
+ error = add_disk(clo->clo_disk);
+ if (error)
+  goto error_out_free_disk;
+#endif
  return 0;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,15,0)
+error_out_free_disk:
+ blk_cleanup_disk(clo->clo_disk);
+#endif
 error_out_free_queue:
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,15,0)
  blk_cleanup_queue(clo->clo_queue);
 error_out_free_tags:
+#endif
  blk_mq_free_tag_set(&clo->tag_set);
 error_out_free_clo:
  cloop_free(clo, sizeof(struct cloop_device));
 error_out:
- return -ENOMEM;
+ return error;
 }
 
 static void cloop_dealloc(int cloop_num)
@@ -1178,9 +1191,13 @@ static void cloop_dealloc(int cloop_num)
  struct cloop_device *clo = cloop_dev[cloop_num];
  if(clo == NULL) return;
  del_gendisk(clo->clo_disk);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,15,0)
+ blk_cleanup_disk(clo->clo_disk);
+#else
  blk_cleanup_queue(clo->clo_queue);
- blk_mq_free_tag_set(&clo->tag_set);
  put_disk(clo->clo_disk);
+#endif
+ blk_mq_free_tag_set(&clo->tag_set);
  cloop_free(clo, sizeof(struct cloop_device));
  cloop_dev[cloop_num] = NULL;
 }
@@ -1269,8 +1286,3 @@ static void __exit cloop_exit(void)
 /* The cloop init and exit function registration (especially needed for Kernel 2.6) */
 module_init(cloop_init);
 module_exit(cloop_exit);
-
-#include <linux/vermagic.h>
-#include <linux/compiler.h>
-
-MODULE_INFO(vermagic, VERMAGIC_STRING);
