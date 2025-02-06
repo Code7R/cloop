@@ -132,6 +132,10 @@ MODULE_PARM_DESC(buffers, "Size of buffer to keep uncompressed blocks in memory 
 static struct file *initial_file=NULL;
 static int cloop_major=MAJOR_NR;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 0, 0)
+#define blk_cleanup_disk put_disk
+#endif
+
 struct cloop_device
 {
  /* Header filled from the file */
@@ -468,7 +472,11 @@ static blk_status_t cloop_queue_rq(struct blk_mq_hw_ctx *hctx, const struct blk_
 //  struct request_queue *q  = hctx->queue;
 //  struct cloop_device *clo = q->queuedata;
  struct request *req = bd->rq;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 16, 0)
  struct cloop_device *clo = req->rq_disk->private_data;
+#else
+ struct cloop_device *clo = req->q->disk->private_data;
+#endif
  blk_status_t ret         = BLK_STS_OK;
 
 #if 1 /* Does it work when loading libraries? */
@@ -529,6 +537,7 @@ static int cloop_set_file(int cloop_num, struct file *file)
 		   (unsigned int)header_size);
    error=-EBADF; goto error_release;
   }
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 10, 0)
  if(isblkdev)
   {
    struct request_queue *q = bdev_get_queue(I_BDEV(file->f_mapping->host));
@@ -543,6 +552,7 @@ static int cloop_set_file(int cloop_num, struct file *file)
    clo->underlying_blksize = block_size(I_BDEV(file->f_mapping->host));
   }
  else
+#endif
    clo->underlying_blksize = PAGE_SIZE;
 
  DEBUGP(KERN_INFO "Underlying blocksize of %s is %u\n", clo->underlying_filename, clo->underlying_blksize);
@@ -652,7 +662,9 @@ static int cloop_set_file(int cloop_num, struct file *file)
    for (i=0,offset=0; i<num_readable; i++)
     {
      loff_t tmp = be64_to_cpu( *(loff_t*) (bbuf+offset) );
-     if (i%50==0) DEBUGP(KERN_INFO "cloop: offset %03d: %llu\n", offsets_read, tmp);
+     if (i%50==0) {
+             DEBUGP(KERN_INFO "cloop: offset %03d: %llu\n", offsets_read, tmp);
+     }
      if(offsets_read > 0)
       {
        loff_t d = CLOOP_BLOCK_OFFSET(tmp) - CLOOP_BLOCK_OFFSET(clo->block_ptrs[offsets_read-1]);
@@ -1060,11 +1072,19 @@ static int cloop_compat_ioctl(struct block_device *bdev, fmode_t mode,
 #endif
 
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 5, 0)
 static int cloop_open(struct block_device *bdev, fmode_t mode)
+#else
+static int cloop_open(struct gendisk *bdev, fmode_t mode)
+#endif
 {
  int cloop_num;
  if(!bdev) return -EINVAL;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 5, 0)
  cloop_num=MINOR(bdev->bd_dev);
+#else
+ cloop_num=bdev->first_minor;
+#endif
  if(cloop_num > cloop_count-1) return -ENODEV;
  /* Allow write open for ioctl, but not for mount. */
  /* losetup uses write-open and flags=0x8002 to set a new file */
@@ -1077,7 +1097,11 @@ static int cloop_open(struct block_device *bdev, fmode_t mode)
  return 0;
 }
 
-static void cloop_close(struct gendisk *disk, fmode_t mode)
+static void cloop_close(struct gendisk *disk
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 5, 0)
+                , fmode_t mode
+#endif
+                )
 {
  int cloop_num;
  if(!disk) return;
@@ -1140,8 +1164,10 @@ static int cloop_alloc(int cloop_num)
    goto error_out_free_tags;
   }
  clo->clo_disk = alloc_disk(1);
-#else
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(6, 10, 0)
  clo->clo_disk = blk_mq_alloc_disk(&clo->tag_set, NULL);
+#else
+ clo->clo_disk = blk_mq_alloc_disk(&clo->tag_set, NULL, NULL);
 #endif
  if(!clo->clo_disk)
   {
@@ -1155,7 +1181,11 @@ static int cloop_alloc(int cloop_num)
  clo->clo_queue = clo->clo_disk->queue;
 #endif
  clo->clo_queue->queuedata = clo;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6,8,0)
  blk_queue_max_hw_sectors(clo->clo_queue, BLK_DEF_MAX_SECTORS);
+#else
+#error FIXME: needing to adjust for recent kernels somehow, probably constructing some parameter struct and use BLK_DEF_MAX_SECTORS_CAP instead?!
+#endif
  spin_lock_init(&clo->queue_lock);
  mutex_init(&clo->clo_ctl_mutex);
  mutex_init(&clo->clo_rq_mutex);
